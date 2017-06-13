@@ -1,6 +1,6 @@
 {
   "name": "adonis-rest",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Restful api for AdonisJs with validation",
   "main": "index.js",
   "scripts": {
