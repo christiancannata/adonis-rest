@@ -20,6 +20,10 @@ class RestController {
     }
   }
 
+  split(val){
+    return val ? val.split(/\s*,\s*/) : []
+  }
+
   * prepare (request, response) {
     this.resourceName = request.param('resource')
     this.Model = this.resource(this.resourceName)
@@ -59,9 +63,7 @@ class RestController {
     }
     response.json(model.toJSON())
   }
-  split(val){
-    return val ? val.split(/\s*,\s*/) : []
-  }
+  
   // readMany - GET /api/:resource
   * index(request, response) {
     yield this.prepare(request)
