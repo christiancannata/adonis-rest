@@ -2,9 +2,29 @@
 
 const inflect = require('i')()
 const Validator = use('Adonis/Addons/Validator')
+const Database = use('Database')
 
-// class RestfulController {
 class RestController {
+  
+  get config() {
+    return {
+      index: {
+        pagination: true,
+        // hidden: 'updated_at',
+        // extra: 'body',
+        // expand: 'user',
+      },
+      detail: {
+        // expand: 'user'
+      }
+    }
+  }
+
+  * prepare (request, response) {
+    this.resourceName = request.param('resource')
+    this.Model = this.resource(this.resourceName)
+    this.id = request.param('id', request.input('id'))
+  }
 
   * columns(table) {
     return yield Database.table(table).columnInfo()
@@ -12,8 +32,8 @@ class RestController {
 
   // create - POST /api/:resource
   * store(request, response) {
-    const Model = this.resource(request.param('resource'))
-    const model = new Model()
+    yield this.prepare(request)
+    const model = new this.Model()
     yield this.save(model, request, response)
   }
 
@@ -39,15 +59,17 @@ class RestController {
     }
     response.json(model.toJSON())
   }
-
+  split(val){
+    return val ? val.split(/\s*,\s*/) : []
+  }
   // readMany - GET /api/:resource
   * index(request, response) {
+    yield this.prepare(request)
     const parentResource = request.param('parent')
-    const model = this.resource(request.param('resource'))
     const parent = this.resource(parentResource)
     const parentId = request.param('parentId')
     let parentInstance
-    let query = model.query()
+    let query = this.Model.query()
     if (parent && parentId) {
       parentInstance = parent.findOrFail(parentId)
       const field = inflect.foreign_key(inflect.singularize(parentResource))
@@ -60,18 +82,18 @@ class RestController {
 
     let page = Math.max(1, request.input('page', Math.floor(offset / limit) + 1))
 
-    let fields = request.input('fields')
-    let hidden = request.input('hidden')
-    let extra = request.input('extra')
-    let expand = request.input('related', request.input('expand'))
+    let fields = request.input('fields', this.config.index.fields)
+    let hidden = request.input('hidden', this.config.index.hidden)
+    let extra = request.input('extra', this.config.index.extra)
+    let expand = request.input('related', request.input('expand', this.config.index.expand))
     let groupBy = request.input('groupBy')
     let orderBy = request.input('orderBy', request.input('sort'))
-    let pagination = request.input('pagination')
+    let pagination = request.input('pagination', this.config.index.pagination)
 
-    extra = extra ? extra.split(/\s*,\s*/) : []
-    hidden = hidden ? hidden.split(/\s*,\s*/) : []
-    fields = fields ? fields.split(/\s*,\s*/) : []
-    let columns = yield this.columns(request.param('resource'))
+    extra = this.split(extra)
+    hidden = this.split(hidden)
+    fields = this.split(fields)
+    let columns = yield this.columns(this.Model.table)
     if (fields.length < 1) {
       let select = []
       for (let name in columns) {
@@ -80,14 +102,42 @@ class RestController {
         }
       }
       fields = select
-      
+
       if (extra) {
         fields = fields.concat(extra)
       }
     }
-    
+
     fields && query.select(fields)
-    expand && query.with(expand)
+    //expand=user,post(id,title)
+    if (expand) {
+      expand = expand.match(/[\w.]+(\(.+?\))?/ig)
+      for (let name of expand) {
+        if (name.indexOf('(') > -1) {
+          let [none, rel, value] = name.match(/([\w.]+)\((.+?)\)/)
+          // config = qs.parse(config) //{fields: 'id,title'}
+          query.with(rel)
+          query.scope(rel, query => {
+            query.select(this.split(value))
+          })
+          // query.scope(rel, query => {
+          //   for (let key in config) {
+          //     let value = config[key]
+          //     switch (key) {
+          //       case 'fields':
+          //         query.select(this.split(value))
+          //         break;
+          //       default:
+          //         query[key](value)
+          //     }
+          //   }
+          // })
+        } else {
+          query.with(name)
+        }
+      }
+      // query.with(expand)
+    }
     // groupBy && query.groupBy(groupBy)    
     if (orderBy) {
       let dir = 'asc'
@@ -149,7 +199,7 @@ class RestController {
     response.header('X-Pagination-Current-Page', page)
     response.header('X-Pagination-Per-Page', limit)
     let results
-    if (pagination) {
+    if (['1', 'true'].includes(String(pagination))) {
       results = yield query.paginate(page, limit, countQuery)
     } else {
       results = yield query.offset(offset).limit(limit).fetch()
@@ -159,8 +209,8 @@ class RestController {
 
   // readOne - GET /api/:resource/:id
   * show(request, response) {
-    const Model = this.resource(request.param('resource'))
-    const query = Model.query().where({ id: request.param('id') })
+    yield this.prepare(request)
+    const query = this.Model.query().where({ id: this.id })
     const expand = request.input('related', request.input('expand'))
     expand && query.with(expand)
     const result = yield query.first()
@@ -202,11 +252,10 @@ class RestController {
   }
 
   * getInstance(request) {
-    const Model = this.resource(request.param('resource'))
-    const instance = yield Model.findOrFail(request.param('id'))
+    yield this.prepare(request)
+    const instance = yield this.Model.findOrFail(this.id)
     return instance
   }
 }
 
-// module.exports = RestfulController
 module.exports = RestController
