@@ -38,9 +38,18 @@ class RestController {
 
   // readMany - GET /api/:resource
   * index(request, response) {
+    const parentResource = request.param('parent')
     const model = this.resource(request.param('resource'))
-    const query = model.query()
-
+    const parent = this.resource(parentResource)
+    const parentId = request.param('parentId')
+    let parentInstance
+    let query = model.query()
+    if (parent && parentId) {
+      parentInstance = parent.findOrFail(parentId)
+      const field = inflect.foreign_key(inflect.singularize(parentResource))
+      // query = parentInstance[request.param('resource')]
+      query.where(field, parentId)
+    }
     let filter = JSON.parse(request.input('query', request.input('filter', request.input('where'))))
     let offset = request.input('offset', request.input('skip', 0))
     let limit =  request.input('perPage', request.input('limit', this.params.defaultPerPage))   
@@ -150,6 +159,9 @@ class RestController {
   resource(resource) {
     if (this.model) {
       return this.model
+    }
+    if (!resource) {
+      return
     }
     return use('App/Model/' + inflect.classify(resource))
   }
