@@ -59,7 +59,7 @@ class RestController {
     let fields = request.input('fields')
     let expand = request.input('related', request.input('expand'))
     let groupBy = request.input('groupBy')
-    let orderBy = request.input('orderBy')
+    let orderBy = request.input('orderBy', request.input('sort'))
     let pagination = request.input('pagination')
     fields && query.select(fields.split(/\s*,\s*/))
     expand && query.with(expand)
@@ -75,7 +75,8 @@ class RestController {
     
     let conditions = []
     const requestData = request.all()
-    const keys = 'page query filter per_page perPage limit offset skip where expand fields groupBy orderBy pagination'.split(' ')
+    
+    const keys = 'page query filter per_page perPage limit offset skip where expand fields groupBy orderBy pagination sort'.split(' ')
     // deal with fields filters
     for (let name in requestData) {
       if (keys.indexOf(name) < 0) {
