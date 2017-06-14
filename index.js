@@ -141,17 +141,16 @@ class RestController {
         query.where(field, condition)
       }
     }
-    let countQuery = query.clone()
-    const count = yield countQuery.clearSelect().count('id as total').first()
-    const total = count.total
+    let countQuery = query.clone().clearSelect()
+    const count = yield countQuery.count('id as total')
+    const total = count[0].total
     response.header('X-Pagination-Total-Count', total)
     response.header('X-Pagination-Page-Count', Math.ceil(total / limit))
     response.header('X-Pagination-Current-Page', page)
     response.header('X-Pagination-Per-Page', limit)
-    // console.log(total)
     let results
     if (pagination) {
-      results = yield query.paginate(page, limit)
+      results = yield query.paginate(page, limit, countQuery)
     } else {
       results = yield query.offset(offset).limit(limit).fetch()
     }
