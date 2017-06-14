@@ -1,6 +1,6 @@
 {
   "name": "adonis-rest",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Restful api for AdonisJs with validation",
   "main": "index.js",
   "scripts": {
@@ -15,7 +15,7 @@
     "adonis-validation-provider": "^3.0.5"
   },
   "keywords": [],
-  "author": "",
+  "author": "wxs77577",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/wxs77577/adonis-rest/issues"
