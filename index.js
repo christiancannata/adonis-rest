@@ -6,6 +6,10 @@ const Validator = use('Adonis/Addons/Validator')
 // class RestfulController {
 class RestController {
 
+  * columns(table) {
+    return yield Database.table(table).columnInfo()
+  }
+
   // create - POST /api/:resource
   * store(request, response) {
     const Model = this.resource(request.param('resource'))
@@ -52,16 +56,37 @@ class RestController {
     }
     let filter = JSON.parse(request.input('query', request.input('filter', request.input('where'))))
     let offset = request.input('offset', request.input('skip', 0))
-    let limit =  request.input('perPage', request.input('limit', this.params.defaultPerPage))   
-    
+    let limit = request.input('perPage', request.input('limit', this.params.defaultPerPage))
+
     let page = Math.max(1, request.input('page', Math.floor(offset / limit) + 1))
-    
+
     let fields = request.input('fields')
+    let hidden = request.input('hidden')
+    let extra = request.input('extra')
     let expand = request.input('related', request.input('expand'))
     let groupBy = request.input('groupBy')
     let orderBy = request.input('orderBy', request.input('sort'))
     let pagination = request.input('pagination')
-    fields && query.select(fields.split(/\s*,\s*/))
+
+    extra = extra ? extra.split(/\s*,\s*/) : []
+    hidden = hidden ? hidden.split(/\s*,\s*/) : []
+    fields = fields ? fields.split(/\s*,\s*/) : []
+    let columns = yield this.columns(request.param('resource'))
+    if (fields.length < 1) {
+      let select = []
+      for (let name in columns) {
+        if (!hidden.includes(name) && (extra.includes(name) || columns[name].dataType != 'text')) {
+          select.push(name)
+        }
+      }
+      fields = select
+      
+      if (extra) {
+        fields = fields.concat(extra)
+      }
+    }
+    
+    fields && query.select(fields)
     expand && query.with(expand)
     // groupBy && query.groupBy(groupBy)    
     if (orderBy) {
@@ -72,14 +97,14 @@ class RestController {
       }
       query.orderBy(orderBy, dir)
     }
-    
+
     let conditions = []
     const requestData = request.all()
-    
-    const keys = 'page query filter per_page perPage limit offset skip where expand fields groupBy orderBy pagination sort'.split(' ')
-    // deal with fields filters
+
+    const keys = 'page query filter per_page perPage limit offset skip where expand fields groupBy orderBy pagination sort extra hidden'.split(' ')
+    // deal with fields filters 
     for (let name in requestData) {
-      if (keys.indexOf(name) < 0) {
+      if (!keys.includes(name)) {
         query.where(name, requestData[name])
       }
     }
@@ -107,7 +132,7 @@ class RestController {
           'Exists', 'NotExists',
           'Between', 'NotBetween',
           'Raw'
-        ].indexOf(Operator) > -1) {
+        ].includes(Operator)) {
           query['where' + Operator](field, value)
         } else {
           query.where(field, operator, value)
@@ -117,7 +142,7 @@ class RestController {
       }
     }
     let countQuery = query.clone()
-    const count = yield countQuery.count('id as total').first()
+    const count = yield countQuery.clearSelect().count('id as total').first()
     const total = count.total
     response.header('X-Pagination-Total-Count', total)
     response.header('X-Pagination-Page-Count', Math.ceil(total / limit))
@@ -171,7 +196,7 @@ class RestController {
 
   }
 
-  get params(){
+  get params() {
     return {
       defaultPerPage: 10
     }
