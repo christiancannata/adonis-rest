@@ -5,6 +5,12 @@ const Validator = use('Adonis/Addons/Validator')
 
 class BaseRestController {
 
+    async show({params, request, response}){
+        await this.prepare(params)
+        const resource = await this.model.findOrFail(this.id)
+        return resource
+    }
+
     async index({params, request, response}) {
         await this.prepare(params)
 
