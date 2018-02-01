@@ -61,12 +61,6 @@ page query filter per_page perPage limit offset skip where expand fields groupBy
 | fields | id,title,created_at | Fields for `select` |
 | orderBy | id | Use `-id` for `desc` |
 
-### Pagination info in headers
-- `X-Pagination-Total-Count`
-- `X-Pagination-Page-Count`
-- `X-Pagination-Current-Page`
-- `X-Pagination-Per-Page`
-
 ### Formats of `query`
 - `query={"created_at": "2017-07-07"}`
 - `query={"created_at": [">", "2017-07-07"]}` or `<`,`<>` etc
