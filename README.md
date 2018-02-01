@@ -3,7 +3,7 @@ Restful api for AdonisJs 4
 
 ## Install
 
-1. `npm install --save adonis-rest`
+1. `npm install --save adonis4-api`
 
 
 ## Prepare
