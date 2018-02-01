@@ -1,7 +1,5 @@
 # adonis-rest
-Restful api for AdonisJs， Welcome to [https://adonis-china.org](https://adonis-china.org)
-
-## [中文文档](README_CN.md)
+Restful api for AdonisJs 4
 
 ## Install
 
@@ -9,7 +7,7 @@ Restful api for AdonisJs， Welcome to [https://adonis-china.org](https://adonis
 
 
 ## Prepare
-Tips: Please be sure that you have some models in `/app/Model/`.  Use `./ace make:model News` to create a News model if not.
+Tips: Please be sure that you have some models in `/app/Models/`.  Use `adonis make:model News` to create a News model if not.
 
 > /app/Http/routes.js
 ``` javascript
