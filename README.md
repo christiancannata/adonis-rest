@@ -1,4 +1,4 @@
-# adonis-rest
+# adonis4-api
 Restful api for AdonisJs 4
 
 ## Install
