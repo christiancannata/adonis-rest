@@ -20,7 +20,7 @@ Route.resource('/api/:resource', 'RestController')
 ``` javascript
 'use strict'
 
-const BaseRestController = require('adonis-rest')
+const BaseRestController = require('adonis4-api')
 
 class RestController  extends BaseRestController{
 
